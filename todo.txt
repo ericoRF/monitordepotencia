@@ -1,0 +1,9 @@
+TO DO
+
+OK proj charter
+OK especificação de requisitos
+OK Github 
+OK Taiga
+> especificação de projetos
+  > Arquitetura
+  > Cenarios de uso
