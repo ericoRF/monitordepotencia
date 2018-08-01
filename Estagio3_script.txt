@@ -1,0 +1,250 @@
+drop database if exists mggp;
+
+create database MGGP;
+
+USE MGGP;
+
+
+drop table if exists Aparelhos;
+
+create table Aparelhos(
+	
+    IDa INT PRIMARY KEY AUTO_INCREMENT,
+
+    Nome VARCHAR(30) NOT NULL,
+
+    Potencia int
+
+);
+
+
+drop table if exists Gravacoes;
+
+create table Gravacoes(
+	
+    IDg INT PRIMARY KEY AUTO_INCREMENT,
+ 
+   Datain DATE,
+    Horain TIME,
+ 
+   Duracao TIME,
+    IDa INT,
+
+    FOREIGN KEY(IDa) REFERENCES Aparelhos(IDa) 
+
+);
+
+
+drop table if exists Amostras;
+
+create table Amostras(
+	
+    IDs INT PRIMARY KEY AUTO_INCREMENT,
+
+    Valor REAL,
+
+    Tempo INT,
+
+    IDg INT,
+
+    FOREIGN KEY(IDg) REFERENCES Gravacoes(IDg)
+
+);
+
+
+drop table if exists Operacao;
+
+create table Operacao( 
+	
+    IDm VARCHAR(2) PRIMARY KEY,
+    Nome VARCHAR(30),
+
+    IDa INT,
+
+    FOREIGN KEY(IDa) REFERENCES Aparelhos(IDa)
+
+);
+
+
+drop table if exists Referencia;
+
+create table Referencia(
+	
+    IDg INT,
+
+    IDm CHAR(2)
+
+);
+
+
+
+
+insert into aparelhos (Nome, Potencia) values('Ventilador Arno', 126);
+
+insert into aparelhos (Nome, Potencia) values('Geladeira Eletrolux', 250);
+
+insert into aparelhos (Nome, Potencia) values('Ar-condicionado Philco', 900);
+
+
+
+insert into operacao values 
+	
+	('V1','Velocidade I',1), 
+	('V2','Velocidade II',1), 
+	('V3','Velocidade III',1),
+    
+	('GI', 'Geladeira Inverno', 2), 
+	('GV', 'Geladeira Verao', 2),
+	
+	('AI', 'Ar-condiconado Inverno', 3), 
+	('AV', 'Ar-condiconado Verao', 3);
+    
+
+
+
+delimiter #
+
+create procedure simular_gravacao()
+
+begin
+
+
+	declare cmax int unsigned default 61;
+
+	declare counter int unsigned default 1;
+
+    
+    start transaction;
+
+	insert into gravacoes (Datain, Horain, Duracao, IDa) values
+
+		(curdate(), curtime(), '00:01:00', 1);
+    
+	while counter < cmax do
+		
+		insert into amostras (valor, tempo, IDg) values (floor(118 + (rand()*8)), counter, 1);
+
+		set counter = counter+1;
+
+	end while;
+
+	insert into referencia values (1, 'V3');
+
+    	commit;
+
+
+    
+    set counter = 1;
+    
+	start transaction;
+    
+	insert into gravacoes (Datain, Horain, Duracao, IDa) values
+
+		(curdate(), curtime(), '00:01:00', 2);
+    
+	while counter < cmax do
+
+		insert into amostras (valor, tempo, IDg) values (floor(150 + (rand()*100)), counter, 2);
+
+		set counter = counter+1;
+
+	end while;
+
+    	insert into referencia values (2, 'GV');
+
+    	commit;
+
+
+    
+    set counter = 1;
+
+    	start transaction;
+
+    	insert into gravacoes (Datain, Horain, Duracao, IDa) values
+
+		(curdate(), curtime(), '00:01:00', 1);
+
+	while counter < cmax do
+
+		insert into amostras (valor, tempo, IDg) values (floor(100 + (rand()*15)), counter, 3);
+
+		set counter = counter+1;
+
+	end while;
+
+	insert into referencia values (3, 'V2');
+
+    	commit;
+
+
+    
+    set counter = 1;
+
+	start transaction;
+
+    	insert into gravacoes (Datain, Horain, Duracao, IDa) values
+
+		(curdate(), curtime(), '00:01:00', 1);
+
+	while counter < cmax do
+
+		insert into amostras (valor, tempo, IDg) values (floor(90 + (rand()*15)), counter, 4);
+
+		set counter = counter+1;
+
+	end while;
+
+	insert into referencia values (4, 'V1');
+
+    	commit;
+
+
+    
+    set counter = 1;
+
+    	start transaction;
+
+    	insert into gravacoes (Datain, Horain, Duracao, IDa) values
+
+		(curdate(), curtime(), '00:01:00', 3);
+
+	while counter < cmax do
+
+		insert into amostras (valor, tempo, IDg) values (floor(300 + (rand()*600)), counter, 5);
+
+		set counter = counter+1;
+
+	end while;
+
+	insert into referencia values (5, 'AF');
+
+    	commit;
+
+
+
+
+end #
+
+
+delimiter ;
+
+
+
+call simular_gravacao();
+
+
+
+select Nome, Potencia from Aparelhos;
+
+
+
+select count(*) as "Numero de amostras de Ventilador Arno" from amostras where IDg IN
+ 
+	(select IDg from gravacoes where IDa IN
+ 
+		(select IDa from aparelhos where Nome = 'Ventilador Arno')
+);
+
+
+
+select Datain, Horain, Duracao from gravacoes;
